@@ -1,0 +1,8 @@
+int	collide(int, int, int);
+void	hold(void);
+void	drop(void);
+void	gameover(void);
+void	step(void);
+void	redraw(void);
+void	initimg(void);
+void	quit(void);

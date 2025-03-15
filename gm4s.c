@@ -48,21 +48,27 @@ kevent(ulong k)
 static void
 pollproc(void *)
 {
-	ulong k;
+	int dt;
+	ulong k, ke, old;
 
-	for(;;){
-		if(recv(keychan, &k) < 0)
+	for(old=0;;){
+		if(recv(keychan, &ke) < 0)
 			return;
+		k = ke ^ ke & old;
+		old = ke & Ktriggers;
 		if(k == 0)
 			continue;
 		if(send(evc, &k) < 0)
 			return;
-		for(k&=Kmove; k&Kmove; k&=Kmove){
-			sleep(40);
-			if(nbrecv(keychan, &k) < 0)
-				return;
+		for(dt=125, k&=Kmove; k&Kmove; k&=Kmove){
+			sleep(dt);
+			switch(nbrecv(keychan, &ke)){
+			case -1: return;
+			case 1: k = ke ^ ke & old; old = ke & Ktriggers; break;
+			}
 			if(send(evc, &k) < 0)
 				return;
+			dt = 40;
 		}
 	}
 }
@@ -85,6 +91,12 @@ ticproc(void *)
 }
 
 void
+disengage(void)
+{
+	sendul(keychan, 0);
+}
+
+void
 threadmain(int argc, char **argv)
 {
 	ulong k;
@@ -103,8 +115,8 @@ threadmain(int argc, char **argv)
 	regkey("down", Kdown, K↓);
 	regkey("left", Kleft, K←);
 	regkey("right", Kright, K→);
-	regkey("a", 'z', Krotl);
-	regkey("b", 'x', Krotr);
+	regkey("b", 'z', Krotl);
+	regkey("a", 'x', Krotr);
 	regkey("l1", ' ', Khold);
 	if(proccreate(pollproc, nil, 4096) < 0)
 		sysfatal("proccreate: %r");

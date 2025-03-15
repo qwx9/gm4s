@@ -161,6 +161,7 @@ freeze(void)
 		}
 	}
 	clearlines();
+	disengage();
 	cur = nil;
 }
 

@@ -49,6 +49,7 @@ enum{
 	Krotl = 1<<4,
 	Krotr = 1<<5,
 	Khold = 1<<6,
+	Ktriggers = K↑ | Krotl | Krotr | Khold,
 
 	Tspeed0 = 1,	/* seconds */
 };

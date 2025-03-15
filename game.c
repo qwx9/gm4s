@@ -2,12 +2,14 @@
 #include <libc.h>
 #include "dat.h"
 #include "fns.h"
+#include "/sys/src/games/eui.h"
 
 char playfield[Ncol * Nrow];
 Current *cur;
 
 enum{
 	Nlineperlvl = 10,
+	Timeinc = BILLION / 10.0,
 };
 static vlong ncleared;
 static int held = -1;
@@ -96,9 +98,16 @@ collide(int x, int y, int rot)
 static void
 updatelevel(void)
 {
+	double t;
+
 	if(++ncleared % Nlineperlvl != 0)
 		return;
-	T *= 0.9;	/* FIXME: linear makes more sense */
+	if((t = T - Timeinc) >= Timeinc)
+		T = t;
+	else if(T > Timeinc)
+		T = Timeinc;
+	else
+		T *= 0.9;
 }
 
 static void
@@ -162,7 +171,7 @@ freeze(void)
 	}
 	clearlines();
 	disengage();
-	cur = nil;
+	spawn();
 }
 
 void

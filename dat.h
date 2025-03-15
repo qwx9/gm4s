@@ -58,6 +58,6 @@ extern char playfield[Ncol * Nrow];
 extern double T;
 
 enum{
-	DOrange = 0xffff00ff,
+	DOrange = 0xff7f00ff,
 	DPurple = 0xff00ffff,
 };

@@ -48,27 +48,48 @@ kevent(ulong k)
 static void
 pollproc(void *)
 {
-	int dt;
-	ulong k, ke, old;
+	int r;
+	ulong k, ke, km, old;
+	u64int t, t0;
 
 	for(old=0;;){
 		if(recv(keychan, &ke) < 0)
 			return;
+		if(ke == 0){
+			old = keys & Ktriggers;
+			continue;
+		}
 		k = ke ^ ke & old;
 		old = ke & Ktriggers;
 		if(k == 0)
 			continue;
 		if(send(evc, &k) < 0)
 			return;
-		for(dt=125, k&=Kmove; k&Kmove; k&=Kmove){
-			sleep(dt);
-			switch(nbrecv(keychan, &ke)){
-			case -1: return;
-			case 1: k = ke ^ ke & old; old = ke & Ktriggers; break;
+		t0 = nanosec() / MILLION + 125;
+		for(k&=Kmove, km=k; k&Kmove; k&=Kmove){
+			if((r = nbrecv(keychan, &ke)) < 0)
+				return;
+			else if(r == 0){
+				if((t = nanosec() / MILLION) >= t0){
+					if(send(evc, &k) < 0)
+						return;
+					t0 = t + 50;
+				}
+				old = keys & Ktriggers;
+				sleep(1);
+				continue;
 			}
+			if(ke == 0){
+				old = keys & Ktriggers;
+				break;
+			}
+			k = ke ^ ke & old;
+			old = ke & Ktriggers;
+			if(k == km)
+				continue;
 			if(send(evc, &k) < 0)
 				return;
-			dt = 40;
+			t0 = nanosec() / MILLION + 50;
 		}
 	}
 }
@@ -79,10 +100,10 @@ ticproc(void *)
 	double t0;
 	vlong t, Δt;
 
-	t0 = nsec();
+	t0 = nanosec();
 	for(;;){
 		nbsendul(stepc, 1);
-		t = nsec();
+		t = nanosec();
 		Δt = t - t0;
 		t0 += T * (1 + Δt / T);
 		if(Δt < T)

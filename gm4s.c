@@ -24,25 +24,24 @@ quit(void)
 static void
 kevent(ulong k)
 {
-	char r, rot;
+	char r;
 	static char rr[] = {Left, Up, Right, Down, Left, Up};
 
 	if(cur == nil)
 		return;
 	if(k & Khold)
 		hold();
-	rot = cur->rot;
-	if(k & Krotl && !collide(cur->x, cur->y, (r = rr[1+rot-1]))
-	|| k & Krotr && !collide(cur->x, cur->y, (r = rr[1+rot+1])))
+	if(k & K↓ && !collide(cur->x, cur->y + 1, cur->rot))
+		cur->y++;
+	if(k & Krotl && !collide(cur->x, cur->y, (r = rr[1+cur->rot-1]))
+	|| k & Krotr && !collide(cur->x, cur->y, (r = rr[1+cur->rot+1])))
 		cur->rot = r;
-	if(k & K← && !collide(cur->x - 1, cur->y, rot))
+	if(k & K← && !collide(cur->x - 1, cur->y, cur->rot))
 		cur->x--;
-	if(k & K→ && !collide(cur->x + 1, cur->y, rot))
+	if(k & K→ && !collide(cur->x + 1, cur->y, cur->rot))
 		cur->x++;
 	if(k & K↑)
 		drop();
-	if(k & K↓ && !collide(cur->x, cur->y + 1, rot))
-		cur->y++;
 }
 
 static void

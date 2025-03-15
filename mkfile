@@ -1,13 +1,15 @@
 </$objtype/mkfile
 BIN=$home/bin/$objtype
 TARG=gm4s
+HFILES= dat.h fns.h /sys/src/games/eui.h
 OFILES=\
 	game.$O\
 	gm4s.$O\
+	nanosec.$O\
 	piece.$O\
-	eui.$O\
+	/sys/src/games/eui.$O\
 
-HFILES= dat.h fns.h
 </sys/src/cmd/mkone
-eui.$O: /sys/src/games/eui.c
-	$CC $CFLAGS $prereq
+
+%.$O: %.c
+	$CC $CFLAGS -o $target $stem.c

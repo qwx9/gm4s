@@ -7,3 +7,4 @@ void	step(void);
 void	redraw(void);
 void	initimg(void);
 void	quit(void);
+u64int	nanosec(void);

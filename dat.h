@@ -19,6 +19,7 @@ enum{
 };
 enum{
 	Fswapped = 1<<0,
+	Fhovering = 1<<1,
 };
 struct Current{
 	int x;
@@ -26,7 +27,7 @@ struct Current{
 	int type;
 	int rot;
 	int flags;
-	double thover;
+	u64int lastmove;
 };
 extern Current *cur;
 extern int fours[NF][Nrot];

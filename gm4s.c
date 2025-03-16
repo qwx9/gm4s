@@ -24,6 +24,7 @@ quit(void)
 static void
 kevent(ulong k)
 {
+	int moved;
 	char r;
 	static char rr[] = {Left, Up, Right, Down, Left, Up};
 
@@ -31,17 +32,29 @@ kevent(ulong k)
 		return;
 	if(k & Khold)
 		hold();
-	if(k & K↓ && !collide(cur->x, cur->y + 1, cur->rot))
+	moved = 0;
+	r = cur->rot;
+	if(k & K↓ && !collide(cur->x, cur->y + 1, r)){
 		cur->y++;
+		moved = 1;
+	}
 	if(k & Krotl && !collide(cur->x, cur->y, (r = rr[1+cur->rot-1]))
-	|| k & Krotr && !collide(cur->x, cur->y, (r = rr[1+cur->rot+1])))
+	|| k & Krotr && !collide(cur->x, cur->y, (r = rr[1+cur->rot+1]))){
 		cur->rot = r;
-	if(k & K← && !collide(cur->x - 1, cur->y, cur->rot))
+		moved = 1;
+	}
+	if(k & K← && !collide(cur->x - 1, cur->y, r)){
 		cur->x--;
-	if(k & K→ && !collide(cur->x + 1, cur->y, cur->rot))
+		moved = 1;
+	}
+	if(k & K→ && !collide(cur->x + 1, cur->y, r)){
 		cur->x++;
+		moved = 1;
+	}
 	if(k & K↑)
 		drop();
+	else if(cur->flags & Fhovering && moved)
+		cur->lastmove = nanosec();
 }
 
 static void

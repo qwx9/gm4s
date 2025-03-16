@@ -14,6 +14,7 @@ int held = -1;
 enum{
 	Nlineperlvl = 10,
 	Timeinc = BILLION / 10.0,
+	Thover = 400 * MILLION,
 };
 static vlong ncleared;
 static int bfield[Nrow];
@@ -77,9 +78,6 @@ spawn(void)
 	if(collide(cur->x, cur->y, cur->rot))
 		gameover();
 }
-
-/* FIXME: gm4s: freeze: overlapping piece type 2 0,21 at 0,21:
- * and I piece horizontal clipped past the wall to the right prior */
 
 int
 collide(int x, int y, int rot)
@@ -206,13 +204,24 @@ gameover(void)
 void
 step(void)
 {
+	u64int t;
+
 	if(cur == nil){
 		spawn();
 		return;
 	}else if(collide(cur->x, cur->y+1, cur->rot)){
-		freeze();
+		t = nanosec();
+		if(cur->lastmove == 0){
+			cur->lastmove = t;
+			cur->flags |= Fhovering;
+		}else if((t - cur->lastmove) >= Thover
+		|| collide(cur->x-1, cur->y, cur->rot)
+		&& collide(cur->x+1, cur->y, cur->rot))
+			freeze();
 		return;
 	}
+	cur->flags &= ~Fhovering;
+	cur->lastmove = 0;
 	cur->y++;
 }
 

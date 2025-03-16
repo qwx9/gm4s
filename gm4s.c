@@ -127,8 +127,7 @@ threadmain(int argc, char **argv)
 	|| (evc = chancreate(sizeof(ulong), 0)) == nil
 	|| (keychan = chancreate(sizeof(ulong), 8)) == nil)
 		sysfatal("chancreate: %r");
-	/* FIXME: simultaneous kproc and joyproc in eui */
-	initemu(Wwidth, Wheight, 4, XRGB32, 1, nil);
+	initemu(Vwidth, Vheight, 4, XRGB32, 1, nil);
 	initimg();
 	fmtinstall('H', encodefmt);
 	regkey("up", Kup, K↑);

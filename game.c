@@ -4,15 +4,18 @@
 #include "fns.h"
 #include "/sys/src/games/eui.h"
 
+/* FIXME: grace period before freeze */
+
 char playfield[Ncol * Nrow];
 Current *cur;
+int held = -1;
+int hist[4] = {FZ, FZ, FS, FS};
 
 enum{
 	Nlineperlvl = 10,
 	Timeinc = BILLION / 10.0,
 };
 static vlong ncleared;
-static int held = -1;
 
 static int bfield[Nrow];
 
@@ -31,7 +34,6 @@ static int
 getpiece(void)
 {
 	int i, *h, r;
-	static int hist[4] = {FZ, FZ, FS, FS};
 
 	for(r=i=0; i<5; i++){
 		r = trand() % 7;

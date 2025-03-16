@@ -38,8 +38,11 @@ enum{
 	Ncol = 10,
 	Block = 16,
 
-	Wwidth = Block * Ncol,
-	Wheight = Block * (Nstartrow + Nextrarows),
+	Wwidth = Ncol,
+	Wheight = Nstartrow + Nextrarows,
+	Wside = 3,
+	Vwidth = Block * (Wwidth + 2 * Wside),
+	Vheight = Block * Wheight,
 
 	K← = 1<<0,
 	K→ = 1<<1,
@@ -55,6 +58,8 @@ enum{
 };
 #define T0	(double)BILLION / Tspeed0
 extern char playfield[Ncol * Nrow];
+extern int held;
+extern int hist[4];
 extern double T;
 
 enum{

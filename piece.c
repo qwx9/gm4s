@@ -7,6 +7,7 @@
 #include "fns.h"
 #include "/sys/src/games/eui.h"
 
+/* FIXME: stabler rotations? */
 int fours[NF][Nrot] = {
 	[FI] {
 		0b0000111100000000,
@@ -63,60 +64,74 @@ static u32int cols[NF] = {
 };
 static Image *piece[NF];
 
-enum{
-	Nline = Ncol * Block,
-};
+/* FIXME: draw level, line clears, score */
+/* FIXME: freeze screen on game over + print message instead of immediate exit */
 
 static void
 drawplayfield(void)
 {
-	int w;
 	u32int c, *s, *p, *pe;
 	char fc, *f, *fe;
 
-	w = Block * 1;
-	p = (u32int *)pic;
-	f = playfield + Ncol * (Nrow - Nstartrow - Nextrarows);
+	memset(pic, 0, Vwidth * Vheight * sizeof *p);	/* FIXME: sides */
+	p = (u32int *)pic + Wside * Block;
+	f = playfield + Wwidth * (Nrow - Wheight);
 	for(s=p, fe=playfield+nelem(playfield); f<fe; f++){
 		if((fc = *f) == 0)
 			//c = cols[nrand(nelem(cols))];
 			c = 0xff000000;
 		else
 			c = cols[fc - 1];
-		for(pe=p+w; p<pe; p++)
+		for(pe=p+Block; p<pe; p++)
 			*p = c;
-		if(p - s == Ncol * w){
-			p += Ncol * w * (Block - 1);
+		if(p - s == Wwidth * Block){
+			p += Vwidth * (Block - 1) + 2 * Wside * Block;
 			s = p;
 		}
 	}
 }
 
 static void
-drawpiece(void)
+drawfour(int x, int y, int rot, int type)
 {
-	int f, x, n, w;
+	int f, m, n;
 	u32int c, *l, *s, *p, *pe;
 
-	if(cur == nil)
-		return;
 	s = (u32int *)pic;
-	s += (cur->y - Nstartrow + Nextrarows) * Nline * Block + cur->x * Block;
+	s += (y - Nstartrow + Nextrarows) * Vwidth * Block + x * Block;
 	l = s;
-	c = cols[cur->type];
-	f = fours[cur->type][cur->rot];
-	w = Block * 1;
-	for(n=0, x=1<<(Nside*Nside-1); x>0; x>>=1){
-		if(s >= (u32int *)pic && f & x)
-			for(p=s, pe=p+w; p<pe; p++)
+	c = cols[type];
+	f = fours[type][rot];
+	for(n=0, m=1<<(Nside*Nside-1); m>0; m>>=1){
+		if(s >= (u32int *)pic && f & m)
+			for(p=s, pe=p+Block; p<pe; p++)
 				*p = c;
 		if(++n == Nside){
-			l += Block * Ncol * w;
+			l += Vwidth * Block;
 			s = l;
 			n = 0;
 		}else
-			s += w;
+			s += Block;
 	}
+}
+
+static void
+drawui(void)
+{
+	int y, *h;
+
+	if(held != -1)
+		drawfour(-1, Nrow / 2, 1, held);
+	for(y=1, h=hist+1; h<hist+nelem(hist); h++, y+=5)
+		drawfour(Wside + Wwidth, Nstartrow - Nextrarows + y, 1, *h);
+}
+
+static void
+drawpiece(void)
+{
+	if(cur == nil)
+		return;
+	drawfour(Wside + cur->x, cur->y, cur->rot, cur->type);
 }
 
 static void
@@ -125,8 +140,8 @@ vscalepic(void)
 	int n;
 	u32int *p, *s, *e;
 
-	n = 1 * Ncol * Block;
-	for(s=(u32int*)pic, e=s+n*Wheight; s<e; s=p)
+	n = Vwidth;
+	for(s=(u32int*)pic, e=s+n*Vheight; s<e; s=p)
 		for(p=s+n; p<s+n*Block; p+=n)
 			memcpy(p, s, n * sizeof *p);
 }
@@ -136,6 +151,7 @@ redraw(void)
 {
 	drawplayfield();
 	drawpiece();
+	drawui();
 	vscalepic();
 	flushmouse(1);
 	flushscreen();

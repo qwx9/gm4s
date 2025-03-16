@@ -8,15 +8,14 @@
 
 char playfield[Ncol * Nrow];
 Current *cur;
+int next[4];
 int held = -1;
-int hist[4] = {FZ, FZ, FS, FS};
 
 enum{
 	Nlineperlvl = 10,
 	Timeinc = BILLION / 10.0,
 };
 static vlong ncleared;
-
 static int bfield[Nrow];
 
 static u32int
@@ -34,6 +33,7 @@ static int
 getpiece(void)
 {
 	int i, *h, r;
+	static int hist[4] = {FZ, FZ, FS, FS};
 
 	for(r=i=0; i<5; i++){
 		r = trand() % 7;
@@ -51,13 +51,25 @@ getpiece(void)
 	return r;
 }
 
+static int
+nextpiece(void)
+{
+	int r, *p;
+
+	r = next[0];
+	for(p=next; p<next+nelem(next)-1; p++)
+		p[0] = p[1];
+	*p = getpiece();
+	return r;
+}
+
 static void
 spawn(void)
 {
 	static Current cur0;
 
 	memset(&cur0, 0, sizeof cur0);
-	cur0.type = getpiece();
+	cur0.type = nextpiece();
 	cur0.rot = Up;
 	cur0.x = Ncol / 2 - 2;
 	cur0.y = Nstartrow - Nextrarows - 1;
@@ -202,4 +214,13 @@ step(void)
 		return;
 	}
 	cur->y++;
+}
+
+void
+initgame(void)
+{
+	int *p;
+
+	for(p=next; p<next+nelem(next); p++)
+		*p = getpiece();
 }

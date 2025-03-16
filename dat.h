@@ -59,7 +59,7 @@ enum{
 #define T0	(double)BILLION / Tspeed0
 extern char playfield[Ncol * Nrow];
 extern int held;
-extern int hist[4];
+extern int next[4];
 extern double T;
 
 enum{

@@ -142,6 +142,7 @@ threadmain(int argc, char **argv)
 	if(proccreate(ticproc, nil, 4096) < 0)
 		sysfatal("proccreate: %r");
 	srand(time(nil));
+	initgame();
 	enum{
 		Astep,
 		Akey,

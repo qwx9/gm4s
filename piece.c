@@ -118,12 +118,12 @@ drawfour(int x, int y, int rot, int type)
 static void
 drawui(void)
 {
-	int y, *h;
+	int y, *p;
 
 	if(held != -1)
 		drawfour(-1, Nrow / 2, 1, held);
-	for(y=1, h=hist+1; h<hist+nelem(hist); h++, y+=5)
-		drawfour(Wside + Wwidth, Nstartrow - Nextrarows + y, 1, *h);
+	for(y=1, p=next; p<next+nelem(next); p++, y+=5)
+		drawfour(Wside + Wwidth, Nstartrow - Nextrarows + y, 1, *p);
 }
 
 static void

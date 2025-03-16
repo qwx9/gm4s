@@ -4,6 +4,7 @@ void	hold(void);
 void	drop(void);
 void	gameover(void);
 void	step(void);
+void	initgame(void);
 void	redraw(void);
 void	initimg(void);
 void	quit(void);

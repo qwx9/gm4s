@@ -141,7 +141,6 @@ threadmain(int argc, char **argv)
 	|| (keychan = chancreate(sizeof(ulong), 8)) == nil)
 		sysfatal("chancreate: %r");
 	initemu(Vwidth, Vheight, 4, XRGB32, 1, nil);
-	initimg();
 	fmtinstall('H', encodefmt);
 	regkey("up", Kup, K↑);
 	regkey("down", Kdown, K↓);

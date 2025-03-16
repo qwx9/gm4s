@@ -6,6 +6,5 @@ void	gameover(void);
 void	step(void);
 void	initgame(void);
 void	redraw(void);
-void	initimg(void);
 void	quit(void);
 u64int	nanosec(void);

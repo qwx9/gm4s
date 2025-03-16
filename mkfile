@@ -3,6 +3,7 @@ BIN=$home/bin/$objtype
 TARG=gm4s
 HFILES= dat.h fns.h /sys/src/games/eui.h
 OFILES=\
+	dat.$O\
 	game.$O\
 	gm4s.$O\
 	nanosec.$O\

@@ -44,7 +44,11 @@ enum{
 	Wside = 3,
 	Vwidth = Block * (Wwidth + 2 * Wside),
 	Vheight = Block * Wheight,
+};
+extern u32int palette[256];
+extern uchar sprites[NF][Block*Block];
 
+enum{
 	K← = 1<<0,
 	K→ = 1<<1,
 	K↑ = 1<<2,

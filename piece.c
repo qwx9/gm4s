@@ -1,12 +1,12 @@
 #include <u.h>
 #include <libc.h>
 #include <thread.h>
-#include <pool.h>
 #include <draw.h>
 #include "dat.h"
 #include "fns.h"
 #include "/sys/src/games/eui.h"
 
+/* FIXME: z and s pieces definitely should not wobble when rotating */
 /* FIXME: stabler rotations? */
 int fours[NF][Nrot] = {
 	[FI] {
@@ -53,77 +53,112 @@ int fours[NF][Nrot] = {
 	},
 };
 
-static u32int cols[NF] = {
-	[FI] DCyan,
-	[FJ] DBlue,
-	[FL] DOrange,
-	[FO] DYellow,
-	[FS] DGreen,
-	[FT] DPurple,
-	[FZ] DRed,
+enum{
+	Cline = 0xf5,
 };
-static Image *piece[NF];
 
 /* FIXME: draw level, line clears, score */
 /* FIXME: freeze screen on game over + print message instead of immediate exit */
 
 static void
+drawbackground(void)
+{
+	int n, m, y;
+	u32int c, *p, *pe;
+
+	memset(pic, 0, Vheight * Vwidth * sizeof *p);
+	c = palette[Cline];
+	p = (u32int *)pic;
+	for(y=Nrow-Wheight; y<Nrow; y++){
+		p += Wside * Block;
+		for(pe=p+Ncol*Block; p<pe; p++)
+			*p = c;
+		p += Wside * Block;
+		m = y == Nrow - 1 ? Block - 2 : Block - 1;
+		for(n=0; n<m; n++){
+			p += Wside * Block;
+			for(pe=p+Ncol*Block; p<pe; p+=Block)
+				*p = c;
+			p[-1] = c;
+			p += Wside * Block;
+		}
+	}
+	p += Wside * Block;
+	for(pe=p+Ncol*Block; p<pe; p++)
+		*p = c;
+}
+
+static void
 drawplayfield(void)
 {
-	u32int c, *s, *p, *pe;
-	char fc, *f, *fe;
+	int n, y;
+	u32int *p, *pe;
+	char fc, *f, *fs, *fe;
+	uchar *sp;
 
-	memset(pic, 0, Vwidth * Vheight * sizeof *p);	/* FIXME: sides */
-	p = (u32int *)pic + Wside * Block;
-	f = playfield + Wwidth * (Nrow - Wheight);
-	for(s=p, fe=playfield+nelem(playfield); f<fe; f++){
-		if((fc = *f) == 0)
-			//c = cols[nrand(nelem(cols))];
-			c = 0xff000000;
-		else
-			c = cols[fc - 1];
-		for(pe=p+Block; p<pe; p++)
-			*p = c;
-		if(p - s == Wwidth * Block){
-			p += Vwidth * (Block - 1) + 2 * Wside * Block;
-			s = p;
+	p = (u32int *)pic;
+	fs = playfield + Wwidth * (Nrow - Wheight);
+	for(y=Nrow-Wheight; y<Nrow; y++){
+		fe = fs + Ncol;
+		for(n=0; n<Block; n++){
+			p += Wside * Block;
+			for(f=fs; f<fe; f++){
+				if((fc = *f) == 0){
+					p += Block;
+					continue;
+				}
+				sp = sprites[fc - 1] + n * Block;
+				for(pe=p+Block; p<pe; p++)
+					*p = palette[*sp++];
+			}
+			p += Wside * Block;
 		}
+		fs += Ncol;
 	}
 }
 
 static void
 drawfour(int x, int y, int rot, int type)
 {
-	int f, m, n;
-	u32int c, *l, *s, *p, *pe;
+	int f, n, m, k;
+	uchar *sp;
+	u32int *l, *s, *p, *pe;
 
-	s = (u32int *)pic;
-	s += (y - Nstartrow + Nextrarows) * Vwidth * Block + x * Block;
-	l = s;
-	c = cols[type];
+	p = (u32int *)pic + (y - Nstartrow + Nextrarows) * Vwidth * Block;
+	p += (Wside + x) * Block;
+	l = p;
 	f = fours[type][rot];
-	for(n=0, m=1<<(Nside*Nside-1); m>0; m>>=1){
-		if(s >= (u32int *)pic && f & m)
-			for(p=s, pe=p+Block; p<pe; p++)
-				*p = c;
-		if(++n == Nside){
+	for(k=0, m=1<<(Nside*Nside-1); m>0; m>>=1){
+		s = p;
+		if(f & m){
+			sp = sprites[type];
+			for(n=0; n<Block; n++){
+				if(p >= (u32int *)pic)
+					for(pe=p+Block; p<pe; p++)
+						*p = palette[*sp++];
+				else
+					p += Block;
+				p += Vwidth - Block;
+			}
+		}
+		p = s + Block;
+		if(++k == Nside){
+			k = 0;
 			l += Vwidth * Block;
-			s = l;
-			n = 0;
-		}else
-			s += Block;
+			p = l;
+		}
 	}
 }
 
 static void
-drawui(void)
+drawsides(void)
 {
 	int y, *p;
 
 	if(held != -1)
-		drawfour(-1, Nrow / 2, 1, held);
+		drawfour(-4, Nrow / 2, 1, held);
 	for(y=1, p=next; p<next+nelem(next); p++, y+=5)
-		drawfour(Wside + Wwidth, Nstartrow - Nextrarows + y, 1, *p);
+		drawfour(Wwidth, Nstartrow - Nextrarows + y, 1, *p);
 }
 
 static void
@@ -131,44 +166,22 @@ drawpiece(void)
 {
 	if(cur == nil)
 		return;
-	drawfour(Wside + cur->x, cur->y, cur->rot, cur->type);
+	drawfour(cur->x, cur->y, cur->rot, cur->type);
 }
 
 static void
-vscalepic(void)
+drawui(void)
 {
-	int n;
-	u32int *p, *s, *e;
-
-	n = Vwidth;
-	for(s=(u32int*)pic, e=s+n*Vheight; s<e; s=p)
-		for(p=s+n; p<s+n*Block; p+=n)
-			memcpy(p, s, n * sizeof *p);
 }
 
 void
 redraw(void)
 {
+	drawbackground();
 	drawplayfield();
 	drawpiece();
+	drawsides();
 	drawui();
-	vscalepic();
 	flushmouse(1);
 	flushscreen();
-}
-
-void
-initimg(void)
-{
-	u32int col, *c;
-	Rectangle r;
-	Image **i, **ie;
-
-	r = Rect(0, 0, Block, Block);
-	for(c=cols, i=piece, ie=i+nelem(piece); i<ie; i++, c++){
-		col = *c;
-		if((*i = allocimage(display, r, XRGB32, 0, col)) == nil)
-			sysfatal("allocimage: %r");
-		*c = col & 0xff << 24 | col >> 8 & 0xffffff;
-	}
 }

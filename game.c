@@ -152,6 +152,7 @@ hold(void)
 	cur->flags |= Fswapped;
 }
 
+/* FIXME: uneven next step delay since we don't reset time in ticproc */
 static void
 freeze(void)
 {
@@ -182,7 +183,7 @@ freeze(void)
 		}
 	}
 	clearlines();
-	spawn();
+	cur = nil;
 }
 
 void

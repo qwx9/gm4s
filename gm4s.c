@@ -79,7 +79,7 @@ pollproc(void *)
 		k = ke ^ ke & oldkeys;
 		t = nanosec() / MILLION;
 		if(k == 0){
-			if(ke & Kmove){
+			if((ke & Ktriggers) == 0 && ke & Kmove){
 				if(t >= trep){
 					k = ke & Kmove;
 					if(send(evc, &k) < 0)

@@ -6,6 +6,7 @@
 #include "fns.h"
 #include "/sys/src/games/eui.h"
 
+/* FIXME: srs */
 /* FIXME: z and s pieces definitely should not wobble when rotating */
 /* FIXME: stabler rotations? */
 int fours[NF][Nrot] = {

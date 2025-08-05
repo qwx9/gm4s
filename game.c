@@ -182,7 +182,6 @@ freeze(void)
 		}
 	}
 	clearlines();
-	disengage();
 	spawn();
 }
 

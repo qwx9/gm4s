@@ -7,13 +7,21 @@
 #include "dat.h"
 #include "fns.h"
 
-extern Channel *keychan;
+/* FIXME: games/4s has interesting rotation behavior, check out how it works;
+ * it kind of implements some of the kicks in its way, check which behavior
+ * makes more sense */
+/* FIXME: pause button */
 
 /* https://tetris.fandom.com/wiki/Playfield */
 
 double T = T0;
 
+enum{
+	Trep0 = 120,
+	Trep = 40,
+};
 static Channel *stepc, *evc;
+static ulong oldkeys;
 
 void
 quit(void)
@@ -60,49 +68,34 @@ kevent(ulong k)
 static void
 pollproc(void *)
 {
-	int r;
-	ulong k, ke, km, old;
-	u64int t, t0;
+	ulong k, ke;
+	u64int t, trep;
 
-	for(old=0;;){
-		if(recv(keychan, &ke) < 0)
-			return;
-		if(ke == 0){
-			old = keys & Ktriggers;
-			continue;
-		}
-		k = ke ^ ke & old;
-		old = ke & Ktriggers;
-		if(k == 0)
-			continue;
-		if(send(evc, &k) < 0)
-			return;
-		t0 = nanosec() / MILLION + 125;
-		for(k&=Kmove, km=k; k&Kmove; k&=Kmove){
-			if((r = nbrecv(keychan, &ke)) < 0)
-				return;
-			else if(r == 0){
-				if((t = nanosec() / MILLION) >= t0){
+	trep = 0;
+	for(;;){
+		ke = keys;
+		if(ke == 0)
+			goto next;
+		k = ke ^ ke & oldkeys;
+		t = nanosec() / MILLION;
+		if(k == 0){
+			if(ke & Kmove){
+				if(t >= trep){
+					k = ke & Kmove;
 					if(send(evc, &k) < 0)
 						return;
-					t0 = t + 50;
+					trep = t + Trep;
 				}
-				old = keys & Ktriggers;
-				sleep(1);
-				continue;
 			}
-			if(ke == 0){
-				old = keys & Ktriggers;
-				break;
-			}
-			k = ke ^ ke & old;
-			old = ke & Ktriggers;
-			if(k == km)
-				continue;
+		}else{
 			if(send(evc, &k) < 0)
 				return;
-			t0 = nanosec() / MILLION + 50;
+			trep = t + Trep0;
 		}
+	next:
+		oldkeys = ke;
+		//oldkeys = ke;
+		sleep(1);
 	}
 }
 
@@ -124,12 +117,6 @@ ticproc(void *)
 }
 
 void
-disengage(void)
-{
-	sendul(keychan, 0);
-}
-
-void
 threadmain(int argc, char **argv)
 {
 	ulong k;
@@ -137,8 +124,7 @@ threadmain(int argc, char **argv)
 	ARGBEGIN{
 	}ARGEND
 	if((stepc = chancreate(sizeof(ulong), 1)) == nil
-	|| (evc = chancreate(sizeof(ulong), 0)) == nil
-	|| (keychan = chancreate(sizeof(ulong), 8)) == nil)
+	|| (evc = chancreate(sizeof(ulong), 0)) == nil)
 		sysfatal("chancreate: %r");
 	initemu(Vwidth, Vheight, 4, XRGB32, 1, nil);
 	fmtinstall('H', encodefmt);

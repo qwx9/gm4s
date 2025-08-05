@@ -94,7 +94,6 @@ pollproc(void *)
 		}
 	next:
 		oldkeys = ke;
-		//oldkeys = ke;
 		sleep(1);
 	}
 }

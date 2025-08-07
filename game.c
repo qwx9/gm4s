@@ -65,12 +65,12 @@ nextpiece(void)
 }
 
 static void
-spawn(void)
+spawn(int next)
 {
 	static Current cur0;
 
 	memset(&cur0, 0, sizeof cur0);
-	cur0.type = nextpiece();
+	cur0.type = next < 0 ? nextpiece() : next;
 	cur0.rot = Up;
 	cur0.x = Ncol / 2 - 2;
 	cur0.y = Nstartrow - Nextrarows - 1;
@@ -146,7 +146,7 @@ hold(void)
 		return;
 	p = held;
 	held = cur->type;
-	spawn();
+	spawn(p);
 	if(p != -1)
 		cur->type = p;
 	cur->flags |= Fswapped;
@@ -207,7 +207,7 @@ step(void)
 	u64int t;
 
 	if(cur == nil){
-		spawn();
+		spawn(-1);
 		return;
 	}else if(collide(cur->x, cur->y+1, cur->rot)){
 		t = nanosec();

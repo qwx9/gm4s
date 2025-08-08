@@ -3,6 +3,7 @@ void	hold(void);
 void	drop(void);
 void	gameover(void);
 void	step(void);
+void	readboard(char*);
 void	initgame(void);
 void	redraw(void);
 void	quit(void);

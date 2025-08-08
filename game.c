@@ -1,5 +1,6 @@
 #include <u.h>
 #include <libc.h>
+#include <ctype.h>
 #include "dat.h"
 #include "fns.h"
 #include "/sys/src/games/eui.h"
@@ -223,6 +224,42 @@ step(void)
 	cur->flags &= ~Fhovering;
 	cur->lastmove = 0;
 	cur->y++;
+}
+
+void
+readboard(char *s)
+{
+	int i, n, b, *bp, max;
+	char c, *p;
+
+	max = nelem(playfield);
+	if((n = strlen(s)) > max){
+		fprint(2, "readboard: string longer than playfield\n");
+		n = Ncol * max;
+	}else if(n < 1)
+		sysfatal("readboard: empty string");
+	i = (n - 1) % Ncol;
+	bp = bfield + Nrow - n / Ncol;
+	if(bp == bfield + nelem(bfield))
+		bp--;
+	b = *bp;
+	for(p=playfield+max-n; p<playfield+nelem(playfield); i--){
+		c = *s++;
+		if(!isdigit(c)){
+			c = 0;
+			b &= ~(1 << i);
+		}else if((c -= '0') <= 0 || c >= NF){
+			c = 0;
+			b &= ~(1 << i);
+		}else
+			b |= 1 << i;
+		*p++ = c;
+		if(i == 0){
+			*bp++ = b;
+			b = 0;
+			i = Ncol;
+		}
+	}
 }
 
 void

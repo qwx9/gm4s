@@ -115,12 +115,21 @@ ticproc(void *)
 	}
 }
 
+static void
+usage(void)
+{
+	sysfatal("usage: %s [-b STR]", argv0);
+}
+
 void
 threadmain(int argc, char **argv)
 {
 	ulong k;
 
 	ARGBEGIN{
+	case 'b':
+		readboard(EARGF(usage()));
+		break;
 	}ARGEND
 	if((stepc = chancreate(sizeof(ulong), 1)) == nil
 	|| (evc = chancreate(sizeof(ulong), 0)) == nil)

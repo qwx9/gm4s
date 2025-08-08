@@ -29,6 +29,21 @@ quit(void)
 	threadexitsall(nil);
 }
 
+static int
+rotate(int x, int y, int dir, int r)
+{
+	int *t, *te;
+
+	t = (dir == Right ? rkick : lkick)[cur->type][cur->rot];
+	for(te=t+Ntest*2; t<te; t+=2)
+		if(!collide(x + t[0], y - t[1], r)){
+			cur->x += t[0];
+			cur->y -= t[1];
+			return 1;
+		}
+	return 0;
+}
+
 static void
 kevent(ulong k)
 {
@@ -46,8 +61,8 @@ kevent(ulong k)
 		cur->y++;
 		moved = 1;
 	}
-	if(k & Krotl && !collide(cur->x, cur->y, (r = rr[1+cur->rot-1]))
-	|| k & Krotr && !collide(cur->x, cur->y, (r = rr[1+cur->rot+1]))){
+	if(k & Krotr && rotate(cur->x, cur->y, Right, (r = rr[1+cur->rot+1]))
+	|| k & Krotl && rotate(cur->x, cur->y, Left, (r = rr[1+cur->rot-1]))){
 		cur->rot = r;
 		moved = 1;
 	}

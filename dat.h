@@ -16,6 +16,8 @@ enum{
 	Nrot,
 
 	Nside = 4,
+
+	Ntest = 5,	/* SRS */
 };
 enum{
 	Fswapped = 1<<0,
@@ -31,6 +33,7 @@ struct Current{
 };
 extern Current *cur;
 extern int fours[NF][Nrot];
+extern rkick[NF][Nrot][Ntest*2], lkick[NF][Nrot][Ntest*2];
 
 enum{
 	Nrow = 40,
